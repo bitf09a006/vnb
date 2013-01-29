@@ -1,0 +1,204 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "CreatNotification";
+}
+
+@{
+    if(Session["userid"] == null){
+
+        Response.Redirect("~/Default.cshtml");
+    }
+    int step = 0;
+    if(Session["step_n"] == null){
+        step = 1;
+        Session["step_n"] = step;
+    }
+    else{
+        step = Session["step_n"].ToString().AsInt();
+    }
+}
+@if( step == 1 )
+{
+    <div id="createnotification_noticebg">
+        <table>
+            <tr>
+                @{
+                    System.Collections.ArrayList noticeBgList = DBOperations.getNoticeBgImages();
+                    int length = noticeBgList.Count;
+                    DataPath tempDataPath = null;
+                }
+
+                @for( int i = 0;i < length;i++ )
+                {
+                    tempDataPath = (DataPath)noticeBgList[i];
+                    
+                    <td>
+                        <img class="noticebg" src="@tempDataPath.Pathsrc" />
+                    </td>
+                }                                                                       
+            </tr>
+        </table>
+    </div>
+    <div id="createnotification_preview">
+        @{
+            String imgSrc = "";
+            if (Session["noticebg"] != null)
+            {
+                imgSrc = Session["noticebg"].ToString(); 
+            }                
+            <img id="noticebg_img" src="@imgSrc" />
+        }
+    </div>                
+    <div id="createnotification_control">
+        <form action="Controller.cshtml" method="post">
+            <button type="submit" name="action" value="createnotification_next_link" id="createnotification_next1_bt" title="Next">Next</button>
+            <input type="hidden" name="noticebg" value="@imgSrc"  id="noticebg_hd"/>
+        </form>
+    </div>
+}
+else if(step == 2)
+{
+    <div id="createnotification_title">
+        Title
+        @{
+            String noticeTitle = "";
+            if (Session["noticetitle"] != null)
+            {
+                noticeTitle = Session["noticetitle"].ToString(); 
+            }                
+            <input type="text" id="noticetitle_tf" value="@noticeTitle" placeholder="Notification Title" />
+        }
+    </div>
+    <div id="createnotification_features">
+        <div id="createnotification_features_biu">
+            <input type="text" id="noticemsg_tf" placeholder="Notification Message" />
+            <br />
+            <input id="bold_cb" type="checkbox" value="bold"/>Bold
+            <input id="italic_cb" type="checkbox" value="italic"/>Italic
+            <input id="underline_cb" type="checkbox" value="underline"/>Underline
+        </div>
+        <div id="createnotification_features_fontstyle">
+            <div class="fontstyledropdown">
+                Font Size
+                <select id="fontsize_dd" name="fontsize">             
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                </select>
+            </div>
+            <div class="fontstyledropdown">
+                Font Style
+                <select id="fontstyle_dd" name="fontstyle">             
+                    <option value="Arial">Arial</option>
+                    <option value="Agency FB">Agency FB</option>
+                    <option value="Batang">Batang</option>
+                </select>
+            </div>    
+            <div class="fontstyledropdown">
+                Font color
+                <select id="fontcolor_dd" name="fontcolor">        
+                    <option value="black">Black</option>     
+                    <option value="red">Red</option>
+                    <option value="green">Green</option>
+                    <option value="blue">Blue</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="purple">Purple</option>
+                    <option value="white">White</option>
+                    <option value="brown">Brown</option>
+                    <option value="pink">Pink</option>
+                    <option value="orange">Orange</option>
+                </select>
+            </div>                                             
+        </div>
+    </div> 
+    <div id="createnotification_preview">
+        @{
+            String imgSrc = Session["noticebg"].ToString();
+        }
+        <div id="createnotification_preview_notice" style="background-image:url('@imgSrc');">
+             @{
+                if( Session["noofparts"] != null ){
+                    int count = Session["noofparts"].ToString().AsInt();
+                    for (int i = 0; i < count - 1; i++)
+                    {
+                        String key = "style" + i;
+                        String style = Session[key].ToString();
+                        key = "msg" + i;
+                        String msg = Session[key].ToString();
+                        <div class='noticemsg' style='@style'> 
+                            @msg
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </div>                
+    <div id="createnotification_control" >
+        <form action="Controller.cshtml" method="post"> 
+            <button type="button" id="addnotice_bt">Add</button>           
+            <button type="button" id="clearnotice_bt">Clear</button>
+            <button type="submit" name="action" value="createnotification_back_link" id="createnotification_back2_bt" title="Back">Back</button>
+            <button type="submit" name="action" value="createnotification_next_link" id="createnotification_next2_bt" title="Next">Next</button>
+            <input type="hidden" name = "fontsize" value="1"  id="fontsize_hd"/>
+            <input type="hidden" name = "fontstyle" value="Arial"  id="fontstyle_hd"/>
+            <input type="hidden" name = "fontcolor" value="black"  id="fontcolor_hd"/>
+            <input type="hidden" name = "fontbold" value="none"  id="fontbold_hd"/>
+            <input type="hidden" name = "fontitalic" value="none"  id="fontitalic_hd"/>
+            <input type="hidden" name = "fontunderline" value="none"  id="fontunderline_hd"/>
+            @{
+                String styleStr = "";
+                String noticeStr = "";
+                String titleStr = "";
+                if (Session["style"] != null)
+                {
+                    styleStr = Session["style"].ToString();
+                    noticeStr = Session["notice"].ToString();
+                    titleStr = Session["noticetitle"].ToString();
+                }                
+            }
+            <input type="hidden" name = "noticestyle" value="@styleStr"  id="noticestyle_hd"/>
+            <input type="hidden" name = "noticecontent" value="@noticeStr"  id="noticecontent_hd"/>
+            <input type="hidden" name = "noticetitle" value="@titleStr" id="noticetitle_hd" />
+        </form>
+    </div>
+}
+else{
+    <div id="createnotification_title">
+        Preview
+    </div>
+	<div id="createnotification_preview">
+        @{
+            String imgSrc = Session["noticebg"].ToString();
+        }
+        <div id="createnotification_preview_notice" style="background-image:url('@imgSrc');">
+            @{
+                int count = Session["noofparts"].ToString().AsInt();
+                for (int i = 0; i < count - 1; i++)
+                {
+                    String key = "style" + i;
+                    String style = Session[key].ToString();
+                    key = "msg" + i;
+                    String msg = Session[key].ToString();
+                    <div class="noticemsg1" style='@style'> 
+                        @msg
+                    </div>
+                }
+            }
+
+        </div>
+    </div>                
+	<div id="createnotification_control">
+        <form action="Controller.cshtml" method="post">
+            <button type="submit" name="action" value="createnotification_back_link" id="createnotification_back3_bt" title="Back">Back</button>
+            <button type="submit" name="action" value="createnotification_save_link" id="createnotification_save3_bt" title="Save">Save</button>
+            <input type="hidden" name="clearall" value="no" id="clearall_hd" />
+        </form>
+    </div>            
+          
+}

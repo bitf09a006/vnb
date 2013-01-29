@@ -1,0 +1,124 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "CreateBoard";
+}
+
+@{
+    if(Session["userid"] == null){
+
+        Response.Redirect("~/Default.cshtml");
+    }
+    int step = 0;
+    if(Session["step_b"] == null){
+        step = 1;
+        Session["step_b"] = step;
+    }
+    else{
+        step = Session["step_b"].ToString().AsInt();
+    }
+}
+@if( step == 1 )
+{    
+    <div id="createboard_title">
+        Title
+        @{
+            String boardTitle = "";
+            if (Session["boardtitle"] != null)
+            {
+                boardTitle = Session["boardtitle"].ToString(); 
+            }                
+            <input type="text" id="boardtitle_tf" value="@boardTitle" placeholder="Board Title" />
+        }
+    </div>
+    <div id="createboard_features">
+        <table>
+            <tr>
+                @{
+                    System.Collections.ArrayList boardbordersList = DBOperations.getBoardBorderThumbnailImages();
+                    int length = boardbordersList.Count;
+                    DataPath tempDataPath = null;
+                }
+
+                @for( int i = 0;i < length;i++ )
+                {
+                    tempDataPath = (DataPath)boardbordersList[i];
+                    
+                    <td>
+                        <a href='@tempDataPath.Pathsrc.Replace("_tn", "")'>
+                            <img class="boardbordertn" src="@tempDataPath.Pathsrc" />
+                        </a>
+                    </td>
+                }                                                          
+            </tr>
+        </table>
+    </div>
+    <div id="createboard_preview">
+        @{
+            String imgSrc = "";
+            if (Session["boardbordertn"] != null)
+            {
+                imgSrc = Session["boardbordertn"].ToString(); 
+            }                
+            <img id="boardborder_img" src="@imgSrc" />
+        }
+    </div>                
+    <div id="createboard_control">
+        <form action="Controller.cshtml" method="post">
+            <button type="submit" name="action" value="createboard_next_link" title="Next" id="createboard_next1_bt">Next</button>
+            <input type="hidden" name = "boardborder" value="@imgSrc"  id="boardborder_hd"/>            
+            <input type="hidden" name = "boardtitle" value="@boardTitle" id="boardtitle_hd" />
+        </form>
+    </div>
+}
+else if (step == 2)
+{
+    <div id="createboard_features">
+        <table>
+            <tr>
+                @{
+                    System.Collections.ArrayList boardCarpetList = DBOperations.getBoardCarpetImages();
+                    int length = boardCarpetList.Count;
+                    DataPath tempDataPath = null;
+                }
+
+                @for( int i = 0;i < length;i++ )
+                {
+                    tempDataPath = (DataPath)boardCarpetList[i];
+                    
+                    <td>
+                        <a  class="fancybox-buttons" data-fancybox-group="button" href='@tempDataPath.Pathsrc'>
+                            <img class="boardcarpet" src="@tempDataPath.Pathsrc" />
+                        </a>
+                    </td>
+                }                                                          
+            </tr>
+        </table>
+    </div>
+    <div id="createboard_preview">
+        @{
+            String imgCarpetSrc = "";
+            if (Session["boardcarpet"] != null)
+            {
+                imgCarpetSrc = Session["boardcarpet"].ToString(); 
+            }
+
+            String imgBorderSrc = "";
+            if (Session["boardborder"] != null)
+            {
+                imgBorderSrc = Session["boardborder"].ToString();
+            }
+                          
+            <div id="createboard_preview_border" style="background-image:url(@imgBorderSrc);">
+            </div>
+            <div id="createboard_preview_carpet" style="background-image:url(@imgCarpetSrc);">
+            </div>
+        }
+    </div>                
+    <div id="createboard_control">
+        <form action="Controller.cshtml" method="post">
+            <button type="submit" name="action" value="createboard_next_link" title="Next" id="createboard_next2_bt">Next</button>            
+            <button type="submit" name="action" value="createboard_back_link" title="Back" id="createboard_back2_bt">Back</button>
+            <input type="hidden" name = "boardcarpet" value="@imgCarpetSrc"  id="boardcarpet_hd"/>         
+        </form>
+    </div>
+}

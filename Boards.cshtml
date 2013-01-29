@@ -1,0 +1,244 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Home";
+}
+@{
+    int userId = 0;
+    int boardId = 0;
+    if(Session["userid"] == null){
+
+        Response.Redirect("~/Default.cshtml");
+    }
+    else{        
+        userId = Session["userid"].ToString().AsInt();
+        if(Session["boardid"] != null)
+        {
+            boardId = Session["boardid"].ToString().AsInt();
+        }
+        Session.RemoveAll();
+        Session["userid"] = userId;
+        Session["boardid"] = boardId;
+    }
+}    
+    <div id="board_pan">        
+        @if(boardId > 0)
+        {
+            NoticeBoard noticeBoard = DBOperations.getNoticeBoard(boardId);
+            bool adminFlag = false;
+            bool memberFlag = false;
+            bool noticeFlag = false;  
+ 
+            System.Collections.ArrayList notifications = noticeBoard.getNotifications();
+            NoticeOnBoard tempNoticeOnBoard = null;
+            String userRole = DBOperations.getUserRole(noticeBoard.Board.Id, userId);
+            <div style="float:left">                                                                                            @*INLINE CSS*@
+            <h1>@noticeBoard.Board.Title</h1>  
+            </div>
+            if (userRole == null)
+            {                
+                <div style="float:right; margin-top:30px">                                                                      @*INLINE CSS*@
+                     <form action="Controller.cshtml?boardid=@noticeBoard.Board.Id" method="post">
+                            <button type="submit" name="action" value="subscribeboard" title="Subscribe">Subscribe</button>
+                     </form>
+                </div>
+            }
+            else if (userRole.Equals("admin"))
+            {
+                adminFlag = true;
+                <div style="float:right; margin-top:30px">                                                                      @*INLINE CSS*@             
+                    <form action="Controller.cshtml?boardid=@noticeBoard.Board.Id" method="post">                                          
+                            <button type="submit" name="action" value="removeboard" title="Remove">Remove</button>                                 
+                            <button type="submit" name="action" value="editboard" title="Edit">Edit</button> 
+                    </form>
+                </div>       
+            }
+            else if(userRole.Equals("member"))
+            {
+                memberFlag = true;                                                                                              @*INLINE CSS*@
+                <div style="float:right; margin-top:30px">  
+                    <form action="Controller.cshtml?boardid=@noticeBoard.Board.Id" method="post">
+                            <button type="submit" name="action" value="unsubscribeboard" title="Unsubscribe">Unsubscribe</button>
+                    </form>
+                </div>
+            }
+            <div id="board_area">
+                <div id="board_border"></div>
+                <div id="board_contents"> 
+                   
+                    @for (int i = 0; i < notifications.Count; i++)
+                    {
+                        tempNoticeOnBoard = (NoticeOnBoard)notifications[i];
+                        String id = "id_" + i;
+                        <div class="sub_board_thumbnail">
+                             @{                                    
+                                String imgSrc = tempNoticeOnBoard.Notification.BackgroundImage;
+                                int count = tempNoticeOnBoard.Notification.StyleList.Count;                                  
+                            }                            
+                            <div class="home_preview_mynotice" style="background-image:url('@imgSrc');">
+             
+                            @{        
+                                
+                                for (int j = 0; j < count; j++)
+                                {
+                                    NoticeElement noticeElement = (NoticeElement)tempNoticeOnBoard.Notification.StyleList[j];
+                                    <div class="noticemsg1" style='@noticeElement.Style'> 
+                                        @noticeElement.Content
+                                    </div>
+                                }            
+                            }
+                            </div>
+                            <div id="@id" class="home_preview_mynotice" style="display:none;background-image:url('@imgSrc');">
+             
+                            @{        
+                                
+                                for (int k = 0; k < count; k++)
+                                {
+                                    NoticeElement noticeElement = (NoticeElement)tempNoticeOnBoard.Notification.StyleList[k];
+                                    <div class="noticemsg1" style='@noticeElement.Style'> 
+                                        @noticeElement.Content
+                                    </div>
+                                }            
+                            }
+                            </div>
+                            <form action="Controller.cshtml?noticeid=@tempNoticeOnBoard.Notification.Id" method="post">                            
+                                @if(adminFlag)
+                                {
+                                     <button type="submit" name="action" value="unpostnotification" title="Unpost">Upst</button>
+                                }  
+                                @if (userId == tempNoticeOnBoard.Notification.UserId)
+                                {
+                                    if(!adminFlag){
+                                        <button type="submit" name="action" value="unpostnotification" title="Unpost">Upst</button>  
+                                    }
+                                    noticeFlag = true;
+                                }                                 
+                                <a class="fancybox" href="#@id" title="@tempNoticeOnBoard.Notification.Title">
+                                    <input type="button" value="View" title="View Notification" />
+                                </a>                            
+      
+                            
+                                @if (noticeFlag)
+                                {
+                                    <button type="submit" name="action" value="editnotification" title="Edit">Edit</button> 
+                                    noticeFlag = false;
+                                }        
+                            </form>
+
+                        </div> 
+                    }                                      
+                </div>
+            </div>
+        }
+        else{
+            <h1>Default</h1>
+        }
+    </div>
+
+    <div id="right_pan">
+        <h2>Subscriptions</h2>
+        <div id="subscription_window">
+            @if (userId > 0)
+            {
+                System.Collections.ArrayList sBoardList = DBOperations.getSubscribedBoard(userId);
+                Board tempBoard = null;
+                for (int i = 0; i < sBoardList.Count; i++)
+                {
+                    tempBoard = (Board)@sBoardList[i];  
+                    <form action="Controller.cshtml?boardid=@tempBoard.Id" method="post" class="sub_board_thumbnail">    
+                        <img src="images/board_thumbnail.png" />
+                        <h5>@tempBoard.Title</h5>                       
+                        <button type="submit" name="action" value="viewboard" title="View">View</button>     
+                        <button type="submit" name="action" value="unsubscribeboard" title="Unsubscribe">Unsubscribe</button>  
+                    </form>
+                }
+            }
+        </div>
+    </div>  
+
+    <div id="bottom_left_pan">
+        <h2>My Notifications</h2>
+        <form action="Controller.cshtml" method="post" style="position:absolute; right:10px;">
+            <button type="submit" name="action" value="createnotification_link" id="createnotification_id" title="Create Notification">+</button>
+        </form>
+        <div id="notification_window">
+            <table>                
+                <tr>
+                    @if (userId > 0)
+                    {
+                        System.Collections.ArrayList notificationList = DBOperations.getUserNotification(userId);
+                        Notification tempNotification = null;
+                        bool isPostingAllowed = DBOperations.isPostingAllowed(boardId, userId);      
+                        for (int i = 0; i < notificationList.Count; i++)
+                        {
+                            tempNotification = (Notification)@notificationList[i]; 
+                            if(tempNotification.Status.Equals("yes"))
+                            {
+                                <td>                                   
+                                    <form action="Controller.cshtml?noticeid=@tempNotification.Id" method="post">                 
+                                        @if(isPostingAllowed)
+                                        {
+                                            <button type="submit" name="action" value="postnotification" title="Post">Pst</button>                                         
+                                        }
+                                        <button type="submit" name="action" value="editnotification" title="Edit">Edt</button> 
+                                        <button type="submit" name="action" value="removenotification" title="Remove">Rmv</button>
+                                    </form>                                   
+
+                                    @{
+                                    
+                                    String imgSrc = tempNotification.BackgroundImage;
+                                    
+                                    }
+                                    <div class="home_preview_mynotice" style="background-image:url('@imgSrc');">
+             
+                                    @{        
+                                        int count = tempNotification.StyleList.Count;
+                                        for (int j = 0; j < count; j++)
+                                        {
+                                            NoticeElement noticeElement = (NoticeElement)tempNotification.StyleList[j];
+                                            <div class="noticemsg1" style='@noticeElement.Style'> 
+                                                @noticeElement.Content
+                                            </div>
+                                        }            
+                                    }
+                                    </div>      
+                                </td>                  
+                            }     
+                        }                   
+                    }
+                </tr>
+            </table>
+        </div>
+    </div>           
+                
+    <div id="bottom_right_pan">
+        <h2>My Boards</h2>
+        <form action="Controller.cshtml" method="post" style="position:absolute; right:10px;">
+                <button type="submit" name="action" value="createboard_link" id="createboard_id" title="Create Board">+</button>
+        </form>
+        <div id="my_board_window" class="abc">            
+            <table>                
+                <tr>
+                    @if(userId > 0)
+                    {
+                        System.Collections.ArrayList cBoardList = DBOperations.getCreatedBoard(userId);
+                        Board tempBoard = null;
+                        for (int i = 0; i < cBoardList.Count; i++)
+                        {
+                            tempBoard = (Board)@cBoardList[i];
+                            
+                            <td>
+                                <form action="Controller.cshtml?boardid=@tempBoard.Id" method="post" class="my_board_thumbnail">   
+                                    
+                                    <img src="Images/board_thumbnail.png" />
+                                    <h5>@tempBoard.Title</h5>
+                                    <button type="submit" name="action" value="viewboard"   title="View">View</button>                                         
+                                    <button type="submit" name="action" value="editboard"   title="Edit">Edit</button> 
+                                    <button type="submit" name="action" value="removeboard" title="Remove">Remove</button>  
+                                </form>
+                            </td>                            
+                        }                   
+                    }
+                </tr>
+            </table>                                                                                       
+        </div>
+    </div>                       

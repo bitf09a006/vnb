@@ -1,0 +1,732 @@
+﻿@{
+    if(IsPost){        
+        var action = Request["action"];
+    
+        if(action.Equals("signup")){
+            var firstName = Request["firstname"];
+            var lastName = Request["lastname"];
+            var email = Request["email"];
+            var password = Request["password"];
+            var confirmPassword = Request["confirmpassword"];
+            var dayOfBirth = Request["dayofbirth"];
+            var monthOfBirth = Request["monthofbirth"];
+            var yearOfBirth = Request["yearofbirth"];
+            var gender = Request["gender"];
+
+            int userId = @DBOperations.registerUser(firstName, lastName, email, password, DateTime.Now, gender);
+
+            if (userId > 0)
+            {
+                Session["userid"] = userId;
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Default.cshtml");
+            }        
+            
+        }
+        else if (action.Equals("signin")){
+            var email = Request["email"];
+            var password = Request["password"];   
+            var rememberMe = Request["rememberme"];
+            
+            int userId = @DBOperations.getUserId(email, password);
+
+            if (userId > 0)
+            {
+                Session["userid"] = userId;
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else if(action.Equals("search"))
+        {
+            Response.Redirect("~/Boards.cshtml");
+        }
+        else if (action.Equals("home_link"))
+        {
+            if(Session["userid"] != null)
+            {
+                int userId = Session["userid"].ToString().AsInt();
+                if(userId > 0)
+                {
+                    Session["boardid"] = 0;
+                    Response.Redirect("~/Home.cshtml?board=0");
+                }
+            }               
+            Response.Redirect("~/Error.cshtml");
+        }
+        else if (action.Equals("profile_link"))
+        {
+            Response.Redirect("~/Home.cshtml?profile=0");
+        } 
+        else if(action.Equals("signout_link")){
+            Session.Clear();
+            Response.Redirect("~/Default.cshtml");
+        }
+        else if (action.Equals("createboard_link"))
+        {
+            Response.Redirect("~/CreateBoard.cshtml");
+        }
+        else if (action.Equals("createboard_next_link"))
+        {
+            int step = Session["step_b"].ToString().AsInt();
+            if (step == 1)
+            {
+                Session["step_b"] = 2;
+                
+                String tempPath = Request["boardborder"];
+                tempPath = tempPath.Replace("_tn", "");
+                Session["boardtitle"] = Request["boardtitle"];
+                Session["boardbordertn"] = Request["boardborder"];
+                Session["boardborder"] = tempPath;
+            }
+            else if (step == 2)
+            {
+               
+            }
+            Response.Redirect("~/CreateBoard.cshtml");
+        }
+        else if (action.Equals("createboard_back_link"))
+        {
+            if (Session["step_b"] != null)
+            {
+                int step = Session["step_b"].ToString().AsInt();
+                if (step == 2)
+                {
+                    Session["step_b"] = 1;
+                    Session["boardcarpet"] = Request["boardcarpet"];                   
+                }
+                else if (step == 3)
+                {
+                    Session["step_b"] = 2;
+                }
+            }
+            Response.Redirect("~/CreateBoard.cshtml");
+        }
+        else if(action.Equals("createboard")){
+            var boardTitle = Request["boardtitle"];
+            var boardDescription = Request["boarddescription"];
+            var postingPermission = Request["postingpermission"];
+            var membershipApproval = Request["membershipapproval"];
+            var privacy = Request["privacy"];
+            if(Session["userid"] == null ){
+                Response.Redirect("~/Default.cshtml");
+            }
+            int userId = Session["userid"].ToString().AsInt();
+            int result = DBOperations.createBoard(boardTitle, boardDescription, postingPermission, membershipApproval, privacy, userId);          
+            Response.Redirect("~/Home.cshtml?boardid="+result);
+        }
+        else if (action.Equals("createnotification_link"))
+        {
+            Response.Redirect("~/CreateNotification.cshtml");
+        }
+        else if (action.Equals("createnotification_next_link"))
+        {
+            if (Session["step_n"] == null)
+            {
+                Response.Redirect("~/CreateNotification.cshtml");
+            }
+            int step = Session["step_n"].ToString().AsInt();
+            if( step == 1 )
+            {
+                Session["step_n"] = 2;
+                Session["noticebg"] = Request["noticebg"];
+            } 
+            else if( step == 2 )
+            {
+                Session["step_n"] = 3;
+                Session["noticetitle"] = Request["noticetitle"];
+                String styleStr = Request["noticestyle"];
+                String[] styles = styleStr.Split('%');
+                Session["style"] = styleStr;
+                int count = styles.Length;
+                Session["noofparts"] = count;
+                for( int i = 0;i < count - 1;i++ )
+                {
+                    String temp = "style" + i;
+                    Session[temp] = styles[i];
+                }
+
+                String noticeStr = Request["noticecontent"];
+                String[] noticeParts = noticeStr.Split('%');
+                Session["notice"] = noticeStr;
+                for( int j = 0;j < count - 1;j++ )
+                {
+                    String temp = "msg" + j;
+                    Session[temp] = noticeParts[j];
+                }
+            }            
+            Response.Redirect("~/CreateNotification.cshtml");
+        }
+        else if (action.Equals("createnotification_back_link"))
+        {
+            if (Session["step_n"] != null)
+            {
+                int step = Session["step_n"].ToString().AsInt();
+                if( step == 2 )
+                {
+                    Session["step_n"] = 1;
+                    String clearCheck = Request["clearall"];
+    
+                    if (clearCheck != null && clearCheck.Equals("yes"))
+                    {
+                        Session.Remove("noofparts");
+                        Session.Remove("style");
+                        Session.Remove("notice");
+
+                    }
+                    else{
+                        String styleStr = Request["noticestyle"];
+                        String[] styles = styleStr.Split('%');
+                        Session["style"] = styleStr;
+                        Session["noticetitle"] = Request["noticetitle"];
+                        int count = styles.Length;
+                        Session["noofparts"] = count;
+                        for (int i = 0; i < count - 1; i++)
+                        {
+                            String temp = "style" + i;
+                            Session[temp] = styles[i];
+                        }
+
+                        String noticeStr = Request["noticecontent"];
+                        String[] noticeParts = noticeStr.Split('%');
+                        Session["notice"] = noticeStr;
+                        for (int j = 0; j < count - 1; j++)
+                        {
+                            String temp = "msg" + j;
+                            Session[temp] = noticeParts[j];
+                        }
+                    }
+                
+                }
+                else if ( step == 3 )
+                {
+                    Session["step_n"] = 2;
+                } 
+            }
+            Response.Redirect("~/CreateNotification.cshtml");
+        }
+        else if (action.Equals("createnotification_save_link"))
+        {
+            Session.Remove("step_n");
+            
+            if( Session["noofparts"] != null )
+            {
+                int count = Session["noofparts"].ToString().AsInt();
+
+                String backgroundImage = Session["noticebg"].ToString();
+            
+                System.Collections.ArrayList styleList = new System.Collections.ArrayList();
+                for (int i = 0; i < count - 1; i++)
+                {
+                    String key = "style" + i;
+                    String style = Session[key].ToString();
+                    key = "msg" + i;
+                    String content = Session[key].ToString();
+                    String backgroundImageStyle = Session["noticebg"].ToString();
+                    NoticeElement noticeElement = new NoticeElement(style, content);
+
+                    styleList.Add(noticeElement);
+                }
+                String notificationTitle = Session["noticetitle"].ToString();
+                if (Session["userid"] == null)
+                {
+                    Response.Redirect("~/Default.cshtml");
+                }
+                int userId = Session["userid"].ToString().AsInt();
+                DBOperations.createNotification(notificationTitle, userId, backgroundImage, styleList);
+            }            
+            Response.Redirect("~/Home.cshtml");
+        }
+        else if (action.Equals("viewboard"))
+        {
+            if (Request.QueryString["boardid"] != null)
+            {
+                int boardId = Request.QueryString["boardid"].AsInt();
+                Session["boardid"] = boardId;
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else if (action.Equals("editboard"))
+        {
+            Response.Redirect("~/Home.cshtml");
+        }
+        else if (action.Equals("removeboard"))
+        {
+            if (Session["userid"] != null && Request.QueryString["boardid"] != null)
+            {
+                int boardId = Request.QueryString["boardid"].AsInt();
+                int userId = Session["userid"].ToString().AsInt();
+                int result = DBOperations.removeBoard(boardId, userId);
+                Session.Remove("boardid");
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else if (action.Equals("subscribeboard"))
+        {
+            if (Session["userid"] != null && Request.QueryString["boardid"] != null)
+            {
+                int boardId = Request.QueryString["boardid"].AsInt();
+                int userId = Session["userid"].ToString().AsInt();
+                int result = DBOperations.subscribeBoard(boardId, userId);
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else if (action.Equals("unsubscribeboard"))
+        {
+            if (Session["userid"] != null && Request.QueryString["boardid"] != null)
+            {
+                int boardId = Request.QueryString["boardid"].AsInt();
+                int userId = Session["userid"].ToString().AsInt();
+                int result = DBOperations.unsubscribeBoard(boardId, userId);
+                Session.Remove("boardid");
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }   
+        else if(action.Equals("postnotification"))
+        {
+            if(Session["boardid"] != null && Request.QueryString["noticeid"] != null)
+            {
+                int boardId = Session["boardid"].ToString().AsInt();
+                int noticeId = Request.QueryString["noticeid"].AsInt();
+                int result = DBOperations.postNotification(boardId, noticeId);
+                Response.Redirect("~/Home.cshtml");                
+            }
+            else
+             {
+                Response.Redirect("~/Error.cshtml");
+             }
+        }
+        else if (action.Equals("editnotification"))
+        {            
+            Response.Redirect("~/Home.cshtml");
+        }
+        else if (action.Equals("viewnotification"))
+        {
+            Response.Redirect("~/Home.cshtml");
+        }
+        else if (action.Equals("removenotification"))
+        {
+            if (Session["userid"] != null && Request.QueryString["noticeid"] != null)
+            {
+                int noticeId = Request.QueryString["noticeid"].AsInt();
+                int result = DBOperations.removeNotificationById(noticeId);
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else if (action.Equals("unpostnotification"))
+        {
+            if (Session["boardid"] != null && Request.QueryString["noticeid"] != null)
+            {
+                int boardId = Session["boardid"].ToString().AsInt();
+                int noticeId = Request.QueryString["noticeid"].AsInt();
+                int result = DBOperations.unpostNotification(boardId, noticeId);
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else{
+            Response.Redirect("~/Error.cshtml");
+        }
+    }
+    else{
+       // Response.Redirect("~/Error.cshtml");
+    }
+}
+
+@*@{
+    if(IsPost){        
+        var action = Request["action"];
+        
+        if(action.Equals("signup")){
+            var firstName = Request["firstname"];
+            var lastName = Request["lastname"];
+            var email = Request["email"];
+            var password = Request["password"];
+            var confirmPassword = Request["confirmpassword"];
+            var dayOfBirth = Request["dayofbirth"];
+            var monthOfBirth = Request["monthofbirth"];
+            var yearOfBirth = Request["yearofbirth"];
+            var gender = Request["gender"];
+            Database db = Database.Open("vnb");
+            Session["db"] = db;
+            int userId = @DBOperations.registerUser(firstName, lastName, email, password, DateTime.Now, gender, db);
+
+            if (userId > 0)
+            {
+                Session["userid"] = userId;
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Session.Remove("db");
+                Response.Redirect("~/Default.cshtml");
+            }        
+            
+        }
+        else if (action.Equals("signin")){
+            var email = Request["email"];
+            var password = Request["password"];   
+            var rememberMe = Request["rememberme"];
+            Database db = Database.Open("vnb");
+            Session["db"] = db;
+            int userId = @DBOperations.getUserId(email, password, db);
+
+            if (userId > 0)
+            {
+                Session["userid"] = userId;
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Session.Remove("db");
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else if(action.Equals("search"))
+        {
+            Response.Redirect("~/Boards.cshtml");
+        }
+        else if (action.Equals("home_link"))
+        {
+            if(Session["userid"] != null)
+            {
+                int userId = Session["userid"].ToString().AsInt();
+                if(userId > 0)
+                {
+                    //Session["boardid"] = DBOperations.getDefaultBoardId(userId);
+                    Session["boardid"] = 0;
+                    Response.Redirect("~/Home.cshtml?board=0");
+                }
+            }               
+            Response.Redirect("~/Error.cshtml");
+        }
+        else if (action.Equals("profile_link"))
+        {
+            Response.Redirect("~/Home.cshtml?profile=0");
+        } 
+        else if(action.Equals("signout_link")){
+            Session.Clear();
+            Response.Redirect("~/Default.cshtml");
+        }
+        else if (action.Equals("createboard_link"))
+        {
+            Response.Redirect("~/CreateBoard.cshtml");
+        }
+        else if (action.Equals("createboard_next_link"))
+        {
+            int step = Session["step_b"].ToString().AsInt();
+            if (step == 1)
+            {
+                Session["step_b"] = 2;
+                
+                String tempPath = Request["boardborder"];
+                tempPath = tempPath.Replace("_tn", "");
+                Session["boardtitle"] = Request["boardtitle"];
+                Session["boardbordertn"] = Request["boardborder"];
+                Session["boardborder"] = tempPath;
+            }
+            else if (step == 2)
+            {
+               
+            }
+            Response.Redirect("~/CreateBoard.cshtml");
+        }
+        else if (action.Equals("createboard_back_link"))
+        {
+            if (Session["step_b"] != null)
+            {
+                int step = Session["step_b"].ToString().AsInt();
+                if (step == 2)
+                {
+                    Session["step_b"] = 1;
+                    Session["boardcarpet"] = Request["boardcarpet"];                   
+                }
+                else if (step == 3)
+                {
+                    Session["step_b"] = 2;
+                }
+            }
+            Response.Redirect("~/CreateBoard.cshtml");
+        }
+        else if(action.Equals("createboard")){
+            var boardTitle = Request["boardtitle"];
+            var boardDescription = Request["boarddescription"];
+            var postingPermission = Request["postingpermission"];
+            var membershipApproval = Request["membershipapproval"];
+            var privacy = Request["privacy"];
+            if(Session["userid"] == null ){
+                Response.Redirect("~/Default.cshtml");
+            }
+            int userId = Session["userid"].ToString().AsInt();
+            Database db = (Database)Session["db"];
+            int result = DBOperations.createBoard(boardTitle, boardDescription, postingPermission, membershipApproval, privacy, userId, db);          
+            Response.Redirect("~/Home.cshtml?boardid="+result);
+        }
+        else if (action.Equals("createnotification_link"))
+        {
+            Response.Redirect("~/CreateNotification.cshtml");
+        }
+        else if (action.Equals("createnotification_next_link"))
+        {
+            int step = Session["step_n"].ToString().AsInt();
+            if( step == 1 )
+            {
+                Session["step_n"] = 2;
+                Session["noticebg"] = Request["noticebg"];
+            } 
+            else if( step == 2 )
+            {
+                Session["step_n"] = 3;
+                Session["noticetitle"] = Request["noticetitle"];
+                String styleStr = Request["noticestyle"];
+                String[] styles = styleStr.Split('%');
+                Session["style"] = styleStr;
+                int count = styles.Length;
+                Session["noofparts"] = count;
+                for( int i = 0;i < count - 1;i++ )
+                {
+                    String temp = "style" + i;
+                    Session[temp] = styles[i];
+                }
+
+                String noticeStr = Request["noticecontent"];
+                String[] noticeParts = noticeStr.Split('%');
+                Session["notice"] = noticeStr;
+                for( int j = 0;j < count - 1;j++ )
+                {
+                    String temp = "msg" + j;
+                    Session[temp] = noticeParts[j];
+                }
+            }            
+            Response.Redirect("~/CreateNotification.cshtml");
+        }
+        else if (action.Equals("createnotification_back_link"))
+        {
+            if (Session["step_n"] != null)
+            {
+                int step = Session["step_n"].ToString().AsInt();
+                if( step == 2 )
+                {
+                    Session["step_n"] = 1;
+                    String clearCheck = Request["clearall"];
+    
+                    if (clearCheck != null && clearCheck.Equals("yes"))
+                    {
+                        Session.Remove("noofparts");
+                        Session.Remove("style");
+                        Session.Remove("notice");
+
+                    }
+                    else{
+                        String styleStr = Request["noticestyle"];
+                        String[] styles = styleStr.Split('%');
+                        Session["style"] = styleStr;
+                        Session["noticetitle"] = Request["noticetitle"];
+                        int count = styles.Length;
+                        Session["noofparts"] = count;
+                        for (int i = 0; i < count - 1; i++)
+                        {
+                            String temp = "style" + i;
+                            Session[temp] = styles[i];
+                        }
+
+                        String noticeStr = Request["noticecontent"];
+                        String[] noticeParts = noticeStr.Split('%');
+                        Session["notice"] = noticeStr;
+                        for (int j = 0; j < count - 1; j++)
+                        {
+                            String temp = "msg" + j;
+                            Session[temp] = noticeParts[j];
+                        }
+                    }
+                
+                }
+                else if ( step == 3 )
+                {
+                    Session["step_n"] = 2;
+                } 
+            }
+            Response.Redirect("~/CreateNotification.cshtml");
+        }
+        else if (action.Equals("createnotification_save_link"))
+        {
+            Session.Remove("step_n");
+            
+            if( Session["noofparts"] != null )
+            {
+                int count = Session["noofparts"].ToString().AsInt();
+
+                String backgroundImage = Session["noticebg"].ToString();
+            
+                System.Collections.ArrayList styleList = new System.Collections.ArrayList();
+                for (int i = 0; i < count - 1; i++)
+                {
+                    String key = "style" + i;
+                    String style = Session[key].ToString();
+                    key = "msg" + i;
+                    String content = Session[key].ToString();
+                    String backgroundImageStyle = Session["noticebg"].ToString();
+                    NoticeElement noticeElement = new NoticeElement(style, content);
+
+                    styleList.Add(noticeElement);
+                }
+                String notificationTitle = Session["noticetitle"].ToString();
+                int userId = Session["userid"].ToString().AsInt();
+                Database db = (Database)Session["db"];
+                DBOperations.createNotification(notificationTitle, userId, backgroundImage, styleList, db);
+            }            
+            Response.Redirect("~/Home.cshtml");
+        }
+        else if (action.Equals("viewboard"))
+        {
+            if (Request.QueryString["boardid"] != null)
+            {
+                int boardId = Request.QueryString["boardid"].AsInt();
+                Session["boardid"] = boardId;
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else if (action.Equals("editboard"))
+        {
+            Response.Redirect("~/Home.cshtml");
+        }
+        else if (action.Equals("removeboard"))
+        {
+            if (Session["userid"] != null && Request.QueryString["boardid"] != null)
+            {
+                int boardId = Request.QueryString["boardid"].AsInt();
+                int userId = Session["userid"].ToString().AsInt();
+                Database db = (Database)Session["db"];
+                int result = DBOperations.removeBoard(boardId, userId, db);
+                Session.Remove("boardid");
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else if (action.Equals("subscribeboard"))
+        {
+            if (Session["userid"] != null && Request.QueryString["boardid"] != null)
+            {
+                int boardId = Request.QueryString["boardid"].AsInt();
+                int userId = Session["userid"].ToString().AsInt();
+                Database db = (Database)Session["db"];
+                int result = DBOperations.subscribeBoard(boardId, userId, db);
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else if (action.Equals("unsubscribeboard"))
+        {
+            if (Session["userid"] != null && Request.QueryString["boardid"] != null)
+            {
+                int boardId = Request.QueryString["boardid"].AsInt();
+                int userId = Session["userid"].ToString().AsInt();
+                Database db = (Database)Session["db"];
+                int result = DBOperations.unsubscribeBoard(boardId, userId, db);
+                Session.Remove("boardid");
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }   
+        else if(action.Equals("postnotification"))
+        {
+            if(Session["boardid"] != null && Request.QueryString["noticeid"] != null)
+            {
+                int boardId = Session["boardid"].ToString().AsInt();
+                int noticeId = Request.QueryString["noticeid"].AsInt();
+                Database db = (Database)Session["db"];
+                int result = DBOperations.postNotification(boardId, noticeId, db);
+                Response.Redirect("~/Home.cshtml");                
+            }
+            else
+             {
+                Response.Redirect("~/Error.cshtml");
+             }
+        }
+        else if (action.Equals("editnotification"))
+        {            
+            Response.Redirect("~/Home.cshtml");
+        }
+        else if (action.Equals("viewnotification"))
+        {
+            Response.Redirect("~/Home.cshtml");
+        }
+        else if (action.Equals("removenotification"))
+        {
+            if (Session["userid"] != null && Request.QueryString["noticeid"] != null)
+            {
+                int noticeId = Request.QueryString["noticeid"].AsInt();
+                Database db = (Database)Session["db"];
+                int result = DBOperations.removeNotificationById(noticeId, db);
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else if (action.Equals("unpostnotification"))
+        {
+            if (Session["boardid"] != null && Request.QueryString["noticeid"] != null)
+            {
+                int boardId = Session["boardid"].ToString().AsInt();
+                int noticeId = Request.QueryString["noticeid"].AsInt();
+                Database db = (Database)Session["db"];
+                int result = DBOperations.unpostNotification(boardId, noticeId, db);
+                Response.Redirect("~/Home.cshtml");
+            }
+            else
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+        }
+        else{
+            Response.Redirect("~/Error.cshtml");
+        }
+    }
+    else{
+       // Response.Redirect("~/Error.cshtml");
+    }
+}*@

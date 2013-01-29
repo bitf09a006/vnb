@@ -1,0 +1,46 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Home";
+}
+
+    <!-- Ativando o jQuery lightBox plugin -->
+    <script type="text/javascript">
+       $(function() {
+            $('#gallery a').lightBox();
+        });
+    </script>
+   	<style type="text/css">
+	/* jQuery lightBox plugin - Gallery style */
+	#gallery {
+		background-color: #444;
+		padding: 10px;
+		width: 520px;
+	}
+	#gallery ul { list-style: none; }
+	#gallery ul li { display: inline; }
+	#gallery ul img {
+		border: 5px solid #3e3e3e;
+		border-width: 5px 5px 20px;
+	}
+	#gallery ul a:hover img {
+		border: 5px solid #fff;
+		border-width: 5px 5px 20px;
+		color: #fff;
+	}
+	#gallery ul a:hover { color: #fff; }
+	</style>
+
+<h1>Error</h1>
+
+
+<h2 id="example">Example</h2>
+<p>Click in the image and see the <strong>jQuery lightBox plugin</strong> in action.</p>
+<div id="gallery">
+    <ul>
+        <li>
+            <a href="Images/Board/board_border_1.png" title="Utilize a flexibilidade dos seletores da jQuery e crie um grupo de imagens como desejar. $('#gallery').lightBox();">
+                <img src="Images/Board/board_border_tn_1.png" width="72" height="72" alt="" />
+            </a>
+        </li>
+    </ul>
+</div>

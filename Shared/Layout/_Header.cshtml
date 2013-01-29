@@ -1,0 +1,21 @@
+﻿<div id="header">
+    <div id="logo_span">
+        <div id="logo" >VNB</div>
+    </div>
+    <div id="header_contents">                	
+        <div id="search">
+            <form>                
+                <input type="text" placeholder="Search Notice Board"/>            
+                <button type="submit" name="action" value="search" title="Search">Search</button>
+            </form>
+        </div>
+    <form action="Controller.cshtml" method="post" class="control">
+            <label>@Session["userid"]</label>
+            <button type="submit" name="action" value="signout_link" id="signout" title="Signout"></button>
+            <button type="submit" name="action" value="home_link" id="home" title="Home"></button>
+            <button type="submit" name="action" value="profile_link" id="profile" title="Profile"></button>
+        </form>                                           
+    </div>               
+</div>
+<div id="header_shadow"></div>
+

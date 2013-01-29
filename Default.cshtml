@@ -1,0 +1,16 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Main";
+}
+
+@{
+    if(Session["userId"] != null){
+
+        Response.Redirect("~/Home.cshtml");
+    }
+}
+
+<form action="Controller.cshtml" method="post">
+        <input type="password" name="password" id="password_id" placeholder="Password">
+        <button type="submit" name="action" value="signin" title="Login">Login</button>
+</form>
