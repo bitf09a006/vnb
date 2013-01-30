@@ -29,6 +29,7 @@
         else if (action.Equals("signin")){
             var email = Request["email"];
             var password = Request["password"];   
+            var rememberMe = Request["rememberme"];
             
             int userId = @DBOperations.getUserId(email, password);
 
